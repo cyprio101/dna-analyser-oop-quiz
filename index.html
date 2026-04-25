@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA Analyzer — OOP Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2530;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --green-dim: #1a3a20;
+    --red: #f85149;
+    --red-dim: #3a1a1a;
+    --blue: #58a6ff;
+    --blue-dim: #1a2a3a;
+    --amber: #d29922;
+    --amber-dim: #2d2200;
+    --purple: #bc8cff;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+  }
+  .dna-icon { font-size: 1.5rem; }
+  header h1 { font-size: 1.05rem; font-weight: 500; color: var(--text); }
+  header p  { font-size: 0.8rem; color: var(--muted); }
+
+  /* ── PROGRESS BAR ── */
+  #progress-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  #progress-bar-outer {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  #progress-bar-inner {
+    height: 100%;
+    background: var(--blue);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  #progress-label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  #score-live { font-size: 0.78rem; color: var(--green); white-space: nowrap; }
+
+  /* ── MAIN LAYOUT ── */
+  main { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── QUESTION HEADER ── */
+  .q-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .q-num {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .q-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-concept  { background: var(--blue-dim);  color: var(--blue); }
+  .badge-code     { background: var(--amber-dim); color: var(--amber); }
+  .badge-debug    { background: var(--red-dim);   color: var(--red); }
+  .badge-truefalse{ background: #1e2530;           color: var(--purple); border: 1px solid #333; }
+
+  .q-text {
+    font-size: 1.02rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+    line-height: 1.65;
+  }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin-bottom: 1.25rem;
+    color: #e6edf3;
+  }
+  .hl-keyword  { color: #ff7b72; }
+  .hl-string   { color: #a5d6ff; }
+  .hl-comment  { color: #8b949e; font-style: italic; }
+  .hl-func     { color: #d2a8ff; }
+  .hl-num      { color: #79c0ff; }
+  .hl-class    { color: #ffa657; }
+  .hl-self     { color: #79c0ff; }
+  .hl-blank    {
+    background: #1a2a1a;
+    border: 1px dashed var(--green);
+    border-radius: 3px;
+    padding: 0 6px;
+    color: var(--green);
+    font-style: italic;
+  }
+
+  /* ── MCQ OPTIONS ── */
+  .options { display: flex; flex-direction: column; gap: 0.6rem; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .option:hover:not(.locked) { border-color: var(--blue); background: var(--blue-dim); }
+  .option.selected  { border-color: var(--blue);  background: var(--blue-dim); }
+  .option.correct   { border-color: var(--green); background: var(--green-dim); }
+  .option.wrong     { border-color: var(--red);   background: var(--red-dim); }
+  .option.locked    { cursor: default; }
+  .opt-letter {
+    width: 22px; height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 0.75rem; font-weight: 600;
+    flex-shrink: 0; margin-top: 1px;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .option.correct .opt-letter { border-color: var(--green); color: var(--green); }
+  .option.wrong   .opt-letter { border-color: var(--red);   color: var(--red); }
+  .option.selected .opt-letter{ border-color: var(--blue);  color: var(--blue); }
+  .opt-text { font-size: 0.92rem; line-height: 1.5; }
+
+  /* ── TEXT INPUT ANSWER ── */
+  .input-answer {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.75rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+    min-height: 42px;
+  }
+  .input-answer:focus { border-color: var(--blue); }
+  .input-answer.correct-border { border-color: var(--green); }
+  .input-answer.wrong-border   { border-color: var(--red); }
+
+  /* ── FEEDBACK BOX ── */
+  .feedback {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 7px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: var(--green-dim); border: 1px solid var(--green); color: #7ee787; }
+  .feedback.wrong-fb   { background: var(--red-dim);   border: 1px solid var(--red);   color: #ffa198; }
+  .feedback strong { font-weight: 600; display: block; margin-bottom: 0.3rem; }
+  .feedback code { font-family: var(--mono); font-size: 0.82em; background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 3px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 0.6rem 1.4rem;
+    border-radius: 7px;
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--blue);
+    color: #0d1117;
+    border-color: var(--blue);
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:disabled { opacity: 0.4; cursor: default; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
+
+  .actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; align-items: center; }
+
+  /* ── RESULTS SCREEN ── */
+  #results-screen { display: none; }
+  .results-hero {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+  }
+  .score-big {
+    font-size: 4rem;
+    font-weight: 300;
+    color: var(--text);
+    font-family: var(--mono);
+    line-height: 1;
+  }
+  .score-label { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+  .grade-badge {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.35rem 1.2rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+  .result-stat {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .result-stat .val { font-size: 1.6rem; font-family: var(--mono); font-weight: 600; }
+  .result-stat .lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
+
+  .review-list { margin-top: 1.5rem; }
+  .review-item {
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .review-item:last-child { border-bottom: none; }
+  .ri-icon { flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; margin-top: 2px; }
+  .ri-pass { background: var(--green-dim); color: var(--green); }
+  .ri-fail { background: var(--red-dim);   color: var(--red); }
+  .ri-body { flex: 1; }
+  .ri-q    { color: var(--text); margin-bottom: 0.2rem; }
+  .ri-ans  { color: var(--muted); font-size: 0.82rem; }
+
+  /* ── QUIZ SCREEN CONTROL ── */
+  #quiz-screen { display: block; }
+  .hidden { display: none !important; }
+
+  /* ── CONCEPT PILL ROW ── */
+  .concept-pills {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin-bottom: 1.75rem;
+  }
+  .pill {
+    padding: 0.3rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .pill-enc { background: var(--blue-dim);  color: var(--blue);   border-color: #2a4a6a; }
+  .pill-inh { background: var(--green-dim); color: var(--green);  border-color: #2a4a2a; }
+  .pill-pol { background: var(--amber-dim); color: var(--amber);  border-color: #3a2a00; }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    main { padding: 1.5rem 1rem 3rem; }
+    .card { padding: 1.25rem 1rem; }
+    header { padding: 1rem; }
+    #progress-wrap { padding: 0.6rem 1rem; }
+    .result-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="dna-icon">🧬</span>
+  <div>
+    <h1>DNA Analyzer — OOP Concepts Quiz</h1>
+    <p>Encapsulation · Inheritance · Polymorphism</p>
+  </div>
+</header>
+
+<div id="progress-wrap">
+  <div id="progress-bar-outer"><div id="progress-bar-inner"></div></div>
+  <span id="progress-label">Question 0 / 0</span>
+  <span id="score-live">Score: 0</span>
+</div>
+
+<main>
+
+<!-- ══════════════ QUIZ SCREEN ══════════════ -->
+<div id="quiz-screen">
+
+  <!-- Intro card -->
+  <div id="intro-card" class="card">
+    <div class="q-text" style="font-size:1.1rem; font-weight:500; margin-bottom:0.75rem;">
+      Ready to ace your presentation?
+    </div>
+    <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.25rem;">
+      This quiz covers every OOP concept in your DNA Analyzer project — from theory to
+      reading and debugging the actual code. By the end you'll be able to explain and
+      write any part of it.
+    </p>
+    <div class="concept-pills">
+      <span class="pill pill-enc">Encapsulation</span>
+      <span class="pill pill-inh">Inheritance</span>
+      <span class="pill pill-pol">Polymorphism</span>
+    </div>
+    <p style="color:var(--muted); font-size:0.82rem; margin-bottom:1.25rem;">
+      20 questions · Multiple choice, True/False, and code fill-in-the-blank
+    </p>
+    <button class="btn btn-primary" onclick="startQuiz()">Start quiz</button>
+  </div>
+
+  <!-- Question card (hidden until started) -->
+  <div id="question-card" class="card hidden">
+    <div class="q-meta">
+      <span class="q-num" id="q-num-label">Question 1</span>
+      <span class="q-badge" id="q-badge">Concept</span>
+    </div>
+    <div class="q-text" id="q-text"></div>
+    <pre id="q-code" class="hidden"></pre>
+    <div id="q-options" class="options hidden"></div>
+    <div id="q-input-wrap" class="hidden">
+      <input id="q-input" class="input-answer" placeholder="Type your answer..." autocomplete="off" />
+    </div>
+    <div id="q-feedback" class="feedback"></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-check" onclick="checkAnswer()" disabled>Check</button>
+      <button class="btn btn-ghost hidden" id="btn-next" onclick="nextQuestion()">Next →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════ RESULTS SCREEN ══════════════ -->
+<div id="results-screen">
+  <div class="card results-hero">
+    <div class="score-big" id="score-display">0/20</div>
+    <div class="score-label">final score</div>
+    <div class="grade-badge" id="grade-badge"></div>
+  </div>
+
+  <div class="result-grid">
+    <div class="result-stat">
+      <div class="val" id="stat-correct" style="color:var(--green)">0</div>
+      <div class="lbl">Correct</div>
+    </div>
+    <div class="result-stat">
+      <div class="val" id="stat-wrong" style="color:var(--red)">0</div>
+      <div class="lbl">Wrong</div>
+    </div>
+    <div class="result-stat">
+      <div class="val" id="stat-pct" style="color:var(--blue)">0%</div>
+      <div class="lbl">Score</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:0.85rem; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">Review</div>
+    <div class="review-list" id="review-list"></div>
+  </div>
+
+  <div style="text-align:center; margin-top:1.5rem;">
+    <button class="btn btn-primary" onclick="restartQuiz()">Try again</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+const QUESTIONS = [
+  {
+    type: "mcq",
+    badge: "concept",
+    text: "What is a <strong>class</strong> in Python OOP?",
+    options: [
+      "A variable that holds a number",
+      "A blueprint or template for creating objects",
+      "A built-in Python function",
+      "A type of loop"
+    ],
+    answer: 1,
+    explanation: "A <strong>class</strong> is a blueprint. When you write <code>class DNASequence:</code>, you're defining a template. An <strong>object</strong> (or instance) is what you create from it: <code>dna = DNASequence('ATGC')</code>."
+  },
+  {
+    type: "mcq",
+    badge: "concept",
+    text: "In the DNA Analyzer, <code>NucleotideSequence</code> is called the <strong>base class</strong>. What does that mean?",
+    options: [
+      "It is the most important class and cannot be changed",
+      "It is the parent class that DNASequence inherits from",
+      "It is a class with no methods",
+      "It stores only base (A, T, G, C) characters"
+    ],
+    answer: 1,
+    explanation: "<strong>Base class</strong> (also called parent or superclass) means it sits at the top of the hierarchy. <code>DNASequence</code> inherits all its attributes and methods — <code>gc_content()</code>, <code>base_counts()</code>, <code>length()</code> — without re-writing them."
+  },
+  {
+    type: "truefalse",
+    badge: "true / false",
+    text: "<strong>True or False:</strong> In the DNA Analyzer, <code>self._sequence</code> uses a single underscore prefix to indicate that it is a private attribute that should not be accessed directly from outside the class.",
+    options: ["True", "False"],
+    answer: 0,
+    explanation: "<strong>True.</strong> In Python, a single underscore <code>_name</code> is a convention meaning 'treat as private'. It enforces <strong>Encapsulation</strong> — the sequence can only be accessed via methods like <code>gc_content()</code>, not modified directly from outside."
+  },
+  {
+    type: "mcq",
+    badge: "concept",
+    text: "Which OOP concept does <code>self._sequence = cleaned</code> demonstrate?",
+    options: [
+      "Polymorphism — the variable behaves differently each time",
+      "Inheritance — the variable is passed down to child classes",
+      "Encapsulation — the data is hidden inside the class and protected",
+      "Abstraction — the variable abstracts away complexity"
+    ],
+    answer: 2,
+    explanation: "<strong>Encapsulation</strong> means bundling data (<code>_sequence</code>) with the methods that operate on it, and hiding the data from outside code. The underscore signals 'do not touch this directly'."
+  },
+  {
+    type: "mcq",
+    badge: "code",
+    text: "Look at this line from the constructor. What does <code>super().__init__(raw_input)</code> do?",
+    code: `<span class="hl-keyword">class</span> <span class="hl-class">DNASequence</span>(NucleotideSequence):
+    <span class="hl-keyword">def</span> <span class="hl-func">__init__</span>(<span class="hl-self">self</span>, raw_input: str):
+        <span class="hl-func">super</span>().__init__(raw_input)  <span class="hl-comment"># &lt;-- this line</span>
+        <span class="hl-keyword">if</span> <span class="hl-string">"U"</span> <span class="hl-keyword">in</span> <span class="hl-self">self</span>._sequence:
+            <span class="hl-keyword">raise</span> <span class="hl-class">ValueError</span>(<span class="hl-string">"DNA cannot contain U!"</span>)`,
+    options: [
+      "It creates a new NucleotideSequence object",
+      "It calls the parent class constructor to run shared setup (cleaning & validation)",
+      "It copies all methods from the parent class",
+      "It prevents the child class from overriding parent methods"
+    ],
+    answer: 1,
+    explanation: "<code>super().__init__(raw_input)</code> calls the <strong>parent class constructor</strong>. This runs the shared setup (uppercasing, removing spaces, checking for invalid bases) before adding the DNA-specific check for the letter 'U'."
+  },
+  {
+    type: "mcq",
+    badge: "concept",
+    text: "Which of the following best describes <strong>Inheritance</strong> as used in this project?",
+    options: [
+      "DNASequence copies all the code from NucleotideSequence into itself",
+      "DNASequence automatically gets all methods and attributes from NucleotideSequence without rewriting them",
+      "NucleotideSequence uses methods defined in DNASequence",
+      "Both classes share the same object in memory"
+    ],
+    answer: 1,
+    explanation: "<strong>Inheritance</strong> means <code>DNASequence</code> gets <code>gc_content()</code>, <code>base_counts()</code>, and <code>length()</code> for free from <code>NucleotideSequence</code> — no copy-paste needed. If you add a new sequence type later (e.g. <code>ProteinSequence</code>), it also inherits them."
+  },
+  {
+    type: "mcq",
+    badge: "code",
+    text: "What does this method return when called on the sequence <code>'ATGCGC'</code>?",
+    code: `<span class="hl-keyword">def</span> <span class="hl-func">gc_content</span>(<span class="hl-self">self</span>) -> <span class="hl-class">float</span>:
+    gc = <span class="hl-self">self</span>._sequence.count(<span class="hl-string">"G"</span>) + <span class="hl-self">self</span>._sequence.count(<span class="hl-string">"C"</span>)
+    <span class="hl-keyword">return</span> round((gc / len(<span class="hl-self">self</span>._sequence)) * <span class="hl-num">100</span>, <span class="hl-num">2</span>)`,
+    options: [
+      "33.33",
+      "50.0",
+      "66.67",
+      "75.0"
+    ],
+    answer: 2,
+    explanation: "Sequence <code>'ATGCGC'</code> has 6 bases: A, T, G, C, G, C. G+C count = 4. So GC% = (4/6) × 100 = <strong>66.67%</strong>."
+  },
+  {
+    type: "mcq",
+    badge: "concept",
+    text: "What is <strong>Polymorphism</strong>?",
+    options: [
+      "The ability to create many objects from one class",
+      "The same method name behaving differently depending on the object's class",
+      "A class having more than one constructor",
+      "Hiding data inside a class using underscores"
+    ],
+    answer: 1,
+    explanation: "<strong>Polymorphism</strong> = 'many forms'. In this project, <code>analyse()</code> is defined in <code>NucleotideSequence</code> but <em>overridden</em> in <code>DNASequence</code>. If you later add <code>RNASequence</code>, its <code>analyse()</code> would do something different again — same name, different behaviour."
+  },
+  {
+    type: "mcq",
+    badge: "code",
+    text: "The parent class defines <code>analyse()</code> like this. Why?",
+    code: `<span class="hl-keyword">def</span> <span class="hl-func">analyse</span>(<span class="hl-self">self</span>):
+    <span class="hl-keyword">raise</span> <span class="hl-class">NotImplementedError</span>(<span class="hl-string">"Child classes must implement analyse()."</span>)`,
+    options: [
+      "It is a bug — the method should not raise an error",
+      "It forces every child class to provide its own version of analyse()",
+      "It prevents analyse() from being called at all",
+      "It means analyse() will call the child class version automatically"
+    ],
+    answer: 1,
+    explanation: "Raising <code>NotImplementedError</code> is a Python pattern for <strong>abstract methods</strong>. It says: 'Any subclass MUST override this'. If a child class forgets to implement <code>analyse()</code>, Python will crash with a clear message rather than silently doing nothing."
+  },
+  {
+    type: "truefalse",
+    badge: "true / false",
+    text: "<strong>True or False:</strong> In the DNA Analyzer, <code>DNASequence</code> re-implements <code>gc_content()</code> because it needs a different calculation from <code>NucleotideSequence</code>.",
+    options: ["True", "False"],
+    answer: 1,
+    explanation: "<strong>False.</strong> <code>DNASequence</code> does NOT re-implement <code>gc_content()</code>. It inherits it directly from <code>NucleotideSequence</code>. Only <code>analyse()</code> is overridden because that needs DNA-specific output."
+  },
+  {
+    type: "mcq",
+    badge: "code",
+    text: "What does <code>VALID_BASES = set('ATGC')</code> mean inside <code>DNASequence</code>?",
+    options: [
+      "It is a local variable that changes each time the class is used",
+      "It is a class-level attribute shared by all DNASequence objects, listing the only allowed letters",
+      "It is a private attribute accessible only through methods",
+      "It imports the set of bases from NucleotideSequence"
+    ],
+    answer: 1,
+    explanation: "Variables defined directly inside a class body (not inside a method) are <strong>class attributes</strong>. All <code>DNASequence</code> objects share the same <code>VALID_BASES = {'A','T','G','C'}</code>. The parent class has <code>VALID_BASES = set()</code> (empty), which child classes override."
+  },
+  {
+    type: "mcq",
+    badge: "debug",
+    text: "A student wrote this code. What is wrong?",
+    code: `dna = <span class="hl-class">DNASequence</span>(<span class="hl-string">'ATGCGT'</span>)
+print(dna._sequence)   <span class="hl-comment"># prints 'ATGCGT'</span>
+dna._sequence = <span class="hl-string">'XXXXX'</span>  <span class="hl-comment"># modifying directly</span>
+print(dna.gc_content())`,
+    options: [
+      "Nothing — this is perfectly valid Python",
+      "The sequence 'XXXXX' contains invalid bases, but bypassing the constructor skips validation — this breaks encapsulation",
+      "You cannot call gc_content() after changing _sequence",
+      "DNASequence does not have a _sequence attribute"
+    ],
+    answer: 1,
+    explanation: "<strong>Encapsulation violation.</strong> The constructor validates input and rejects invalid characters. Directly setting <code>dna._sequence = 'XXXXX'</code> bypasses all validation, corrupting the object. The underscore convention exists to prevent exactly this. You should never reach into <code>_sequence</code> from outside the class."
+  },
+  {
+    type: "mcq",
+    badge: "code",
+    text: "Trace through this code. What does <code>isinstance(obj, DNASequence)</code> allow the program to do?",
+    code: `<span class="hl-keyword">if</span> isinstance(obj, <span class="hl-class">DNASequence</span>):
+    rna = obj.transcribe_to_messenger_rna()
+    positions = obj.find_all_positions_of_motif(<span class="hl-string">"ATG"</span>)`,
+    options: [
+      "It converts the object to a DNASequence if it isn't one already",
+      "It checks the object's type at runtime so DNA-only methods are only called on DNA objects",
+      "It prevents RNASequence objects from being created",
+      "It is equivalent to checking obj.VALID_BASES == set('ATGC')"
+    ],
+    answer: 1,
+    explanation: "<code>isinstance(obj, DNASequence)</code> returns <code>True</code> only if <code>obj</code> is a <code>DNASequence</code>. This is runtime type-checking — it lets us safely call DNA-only methods (<code>transcribe_to_messenger_rna</code>, <code>find_all_positions_of_motif</code>) without crashing when <code>obj</code> is an <code>RNASequence</code>."
+  },
+  {
+    type: "mcq",
+    badge: "debug",
+    text: "A student runs the program and enters the sequence <code>'ATGCUU'</code>. What happens and why?",
+    options: [
+      "The program analyses it normally — U is allowed in DNA",
+      "A ValueError is raised: 'Sequence contains invalid characters' — because U is not in DNASequence.VALID_BASES",
+      "The program silently converts U to T before analysing",
+      "A SyntaxError is raised because the input is not a Python string"
+    ],
+    answer: 1,
+    explanation: "<code>DNASequence.VALID_BASES = set('ATGC')</code>. The letter 'U' is not in that set. The validation loop in <code>NucleotideSequence.__init__</code> catches this and raises a <code>ValueError</code>. The <code>try/except</code> in <code>main()</code> catches it and prints the error message."
+  },
+  {
+    type: "mcq",
+    badge: "code",
+    text: "What does this loop find, and what is the purpose of <code>i + 1</code>?",
+    code: `<span class="hl-keyword">for</span> i <span class="hl-keyword">in</span> range(len(<span class="hl-self">self</span>._sequence) - <span class="hl-num">2</span>):
+    <span class="hl-keyword">if</span> <span class="hl-self">self</span>._sequence[i:i+<span class="hl-num">3</span>] == <span class="hl-string">"ATG"</span>:
+        start_codon_positions.append(i + <span class="hl-num">1</span>)`,
+    options: [
+      "It finds every 3-base window equal to ATG; i+1 converts from 0-based (Python) to 1-based (biology) position numbering",
+      "It counts how many A's appear; i+1 skips the first base",
+      "It finds the last occurrence of ATG; i+1 ensures the last base is included",
+      "It checks triplets for stop codons; i+1 avoids index out-of-range errors"
+    ],
+    answer: 0,
+    explanation: "Python lists are 0-indexed, so the first character is at position 0. Biologists count from 1. Adding 1 converts: if ATG starts at Python index 0, we report position 1. The loop stops at <code>len-2</code> so a 3-letter slice never goes out of bounds."
+  },
+  {
+    type: "mcq",
+    badge: "concept",
+    text: "If you wanted to add an <code>RNASequence</code> class to this project, what would you write?",
+    options: [
+      "class RNASequence: — a completely new class with no connection to NucleotideSequence",
+      "class RNASequence(NucleotideSequence): — inheriting from the base class and overriding VALID_BASES and analyse()",
+      "class RNASequence extends NucleotideSequence: — using the Java-style syntax",
+      "def RNASequence(NucleotideSequence): — using a function definition"
+    ],
+    answer: 1,
+    explanation: "Python inheritance syntax is <code>class Child(Parent):</code>. <code>RNASequence</code> would set <code>VALID_BASES = set('AUGC')</code> and override <code>analyse()</code> with RNA-specific output. It would inherit <code>gc_content()</code>, <code>base_counts()</code>, and <code>length()</code> for free."
+  },
+  {
+    type: "mcq",
+    badge: "debug",
+    text: "A student deletes the line <code>if __name__ == '__main__': main()</code> and just writes <code>main()</code> at the bottom. What is the practical difference?",
+    options: [
+      "No difference — both run main() when the file is executed",
+      "Without the guard, main() runs even when the file is imported as a module by another script",
+      "Without the guard, the program crashes immediately with a NameError",
+      "Without the guard, the OOP classes stop working correctly"
+    ],
+    answer: 1,
+    explanation: "The <code>if __name__ == '__main__':</code> guard means: 'only run main() when THIS file is the entry point'. If another script imports this file (e.g. <code>import dna_analyzer</code>), the guard prevents <code>main()</code> from running automatically. Without it, importing the module immediately starts the program — very annoying for reuse."
+  },
+  {
+    type: "mcq",
+    badge: "concept",
+    text: "Which of these is the correct summary of all three OOP concepts used in this project?",
+    options: [
+      "Encapsulation = hiding data · Inheritance = sharing code between parent and child · Polymorphism = same method name, different behaviour",
+      "Encapsulation = creating objects · Inheritance = copying code · Polymorphism = using different variable types",
+      "Encapsulation = using underscores · Inheritance = using super() · Polymorphism = using isinstance()",
+      "Encapsulation = private classes · Inheritance = multiple classes · Polymorphism = multiple methods"
+    ],
+    answer: 0,
+    explanation: "The cleanest one-line definitions: <strong>Encapsulation</strong> = bundle data + methods, hide internal state. <strong>Inheritance</strong> = child class gets parent's code for free. <strong>Polymorphism</strong> = same interface (<code>analyse()</code>), different implementations per class."
+  },
+  {
+    type: "mcq",
+    badge: "debug",
+    text: "The lecturer deletes part of the constructor. Which line is missing to make the class work correctly?",
+    code: `<span class="hl-keyword">class</span> <span class="hl-class">NucleotideSequence</span>:
+    VALID_BASES = set()
+
+    <span class="hl-keyword">def</span> <span class="hl-func">__init__</span>(<span class="hl-self">self</span>, raw_input: str):
+        cleaned = raw_input.upper().replace(<span class="hl-string">" "</span>, <span class="hl-string">""</span>)
+        <span class="hl-keyword">if not</span> all(base <span class="hl-keyword">in</span> <span class="hl-self">self</span>.VALID_BASES <span class="hl-keyword">for</span> base <span class="hl-keyword">in</span> cleaned):
+            <span class="hl-keyword">raise</span> <span class="hl-class">ValueError</span>(<span class="hl-string">"Invalid characters."</span>)
+        <span class="hl-comment"># ← MISSING LINE HERE</span>`,
+    options: [
+      "return cleaned",
+      "self.sequence = cleaned",
+      "self._sequence = cleaned",
+      "cleaned = self._sequence"
+    ],
+    answer: 2,
+    explanation: "The missing line is <code>self._sequence = cleaned</code>. Without it, the sequence is never stored on the object. Every method that tries to access <code>self._sequence</code> would crash with an <code>AttributeError</code>. The underscore is important — it's the encapsulation convention."
+  },
+  {
+    type: "mcq",
+    badge: "code",
+    text: "When the program runs <code>dna.analyse()</code>, which class's <code>analyse()</code> is actually executed?",
+    code: `dna = <span class="hl-class">DNASequence</span>(<span class="hl-string">'ATGCGT'</span>)
+dna.analyse()  <span class="hl-comment"># which analyse() runs?</span>`,
+    options: [
+      "NucleotideSequence.analyse() — because that's where it's first defined",
+      "DNASequence.analyse() — because the object's actual type is DNASequence, and it overrides the parent's version",
+      "Both run — the parent's version first, then the child's",
+      "Neither — analyse() raises NotImplementedError and the program crashes"
+    ],
+    answer: 1,
+    explanation: "This is <strong>Polymorphism</strong> in action. Python checks the object's actual class first. Since <code>dna</code> is a <code>DNASequence</code> and that class overrides <code>analyse()</code>, Python runs <code>DNASequence.analyse()</code>. The parent's <code>NotImplementedError</code> version is completely bypassed."
+  }
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = [];
+let quizStarted = false;
+let shuffled = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  quizStarted = true;
+  shuffled = shuffle(QUESTIONS);
+  currentQ = 0;
+  score = 0;
+  answered = [];
+  document.getElementById('intro-card').classList.add('hidden');
+  document.getElementById('question-card').classList.remove('hidden');
+  renderQuestion();
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = shuffled.length;
+  const done  = currentQ;
+  document.getElementById('progress-bar-inner').style.width = (done / total * 100) + '%';
+  document.getElementById('progress-label').textContent = `Question ${done} / ${total}`;
+  document.getElementById('score-live').textContent = `Score: ${score}`;
+}
+
+function renderQuestion() {
+  const q = shuffled[currentQ];
+
+  document.getElementById('q-num-label').textContent = `Question ${currentQ + 1} of ${shuffled.length}`;
+
+  const badge = document.getElementById('q-badge');
+  badge.textContent = q.badge;
+  badge.className = 'q-badge';
+  if (q.badge === 'concept')      badge.classList.add('badge-concept');
+  else if (q.badge === 'code')    badge.classList.add('badge-code');
+  else if (q.badge === 'debug')   badge.classList.add('badge-debug');
+  else                            badge.classList.add('badge-truefalse');
+
+  document.getElementById('q-text').innerHTML = q.text;
+
+  const codeEl = document.getElementById('q-code');
+  if (q.code) { codeEl.innerHTML = q.code; codeEl.classList.remove('hidden'); }
+  else        { codeEl.classList.add('hidden'); }
+
+  const optEl = document.getElementById('q-options');
+  const inpWrap = document.getElementById('q-input-wrap');
+
+  optEl.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.dataset.idx = i;
+    div.innerHTML = `<span class="opt-letter">${letters[i]}</span><span class="opt-text">${opt}</span>`;
+    div.addEventListener('click', () => selectOption(div, i));
+    optEl.appendChild(div);
+  });
+  optEl.classList.remove('hidden');
+  inpWrap.classList.add('hidden');
+
+  const fb = document.getElementById('q-feedback');
+  fb.className = 'feedback';
+  fb.innerHTML = '';
+
+  document.getElementById('btn-check').disabled = true;
+  document.getElementById('btn-next').classList.add('hidden');
+}
+
+let selectedIdx = null;
+
+function selectOption(el, idx) {
+  if (el.classList.contains('locked')) return;
+  selectedIdx = idx;
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn-check').disabled = false;
+}
+
+function checkAnswer() {
+  const q = shuffled[currentQ];
+  const correct = q.answer;
+  const wasCorrect = (selectedIdx === correct);
+
+  document.querySelectorAll('.option').forEach((o, i) => {
+    o.classList.add('locked');
+    if (i === correct)       o.classList.add('correct');
+    if (i === selectedIdx && i !== correct) o.classList.add('wrong');
+  });
+
+  if (wasCorrect) score++;
+
+  const fb = document.getElementById('q-feedback');
+  fb.className = 'feedback show ' + (wasCorrect ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = `<strong>${wasCorrect ? '✓ Correct!' : '✗ Not quite.'}</strong>${q.explanation}`;
+
+  answered.push({ q: q.text.replace(/<[^>]+>/g, ''), correct: wasCorrect, correctAns: q.options[correct] });
+
+  document.getElementById('btn-check').disabled = true;
+  document.getElementById('btn-next').classList.remove('hidden');
+  updateProgress();
+}
+
+function nextQuestion() {
+  currentQ++;
+  selectedIdx = null;
+  if (currentQ >= shuffled.length) {
+    showResults();
+  } else {
+    renderQuestion();
+    updateProgress();
+  }
+}
+
+function showResults() {
+  document.getElementById('quiz-screen').classList.add('hidden');
+  document.getElementById('results-screen').style.display = 'block';
+
+  const total = shuffled.length;
+  const pct = Math.round((score / total) * 100);
+
+  document.getElementById('score-display').textContent = `${score}/${total}`;
+  document.getElementById('stat-correct').textContent = score;
+  document.getElementById('stat-wrong').textContent = total - score;
+  document.getElementById('stat-pct').textContent = pct + '%';
+
+  const gb = document.getElementById('grade-badge');
+  if (pct >= 90)      { gb.textContent = 'Excellent — presentation ready!'; gb.style.cssText = 'background:var(--green-dim);color:var(--green);border:1px solid var(--green);'; }
+  else if (pct >= 70) { gb.textContent = 'Good — review the wrong answers'; gb.style.cssText = 'background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue);'; }
+  else if (pct >= 50) { gb.textContent = 'Keep practising — focus on code questions'; gb.style.cssText = 'background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);'; }
+  else                { gb.textContent = 'Read the code carefully and retry'; gb.style.cssText = 'background:var(--red-dim);color:var(--red);border:1px solid var(--red);'; }
+
+  document.getElementById('progress-bar-inner').style.width = '100%';
+  document.getElementById('progress-label').textContent = `Complete!`;
+  document.getElementById('score-live').textContent = `Score: ${score}`;
+
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  answered.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `
+      <div class="ri-icon ${a.correct ? 'ri-pass' : 'ri-fail'}">${a.correct ? '✓' : '✗'}</div>
+      <div class="ri-body">
+        <div class="ri-q">${a.q.substring(0, 90)}${a.q.length > 90 ? '…' : ''}</div>
+        ${!a.correct ? `<div class="ri-ans">Correct answer: ${a.correctAns}</div>` : ''}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function restartQuiz() {
+  document.getElementById('results-screen').style.display = 'none';
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  document.getElementById('question-card').classList.add('hidden');
+  document.getElementById('intro-card').classList.remove('hidden');
+  document.getElementById('progress-bar-inner').style.width = '0%';
+  document.getElementById('progress-label').textContent = 'Question 0 / 0';
+  document.getElementById('score-live').textContent = 'Score: 0';
+}
+</script>
+</body>
+</html>
